@@ -4,7 +4,10 @@ import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.TopicPartition;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Properties;
 import java.util.stream.Collectors;
 
 public class Consumer {
@@ -64,11 +67,11 @@ public class Consumer {
 //            partitions.forEach(part -> System.out.println(part.partition()));
 
             System.out.println("\n\nPolling records: ");
-            ConsumerRecords<Integer, String> records = consumer.poll(Duration.ofMillis(30000l));
+            ConsumerRecords<Integer, String> records = consumer.poll(Duration.ofMillis(3000l));
 
             System.out.println("size of records polled is " + records.count());
             for (ConsumerRecord<Integer, String> record : records) {
-                 System.out.println("Received message: (key-" + record.key() + ", Value- " + record.value() + ") at offset " + record.offset() + " from partition " + record.partition());
+                System.out.println("Received message: (key-" + record.key() + ", Value- " + record.value() + ") at offset " + record.offset() + " from partition " + record.partition());
             }
 
             consumer.commitSync();

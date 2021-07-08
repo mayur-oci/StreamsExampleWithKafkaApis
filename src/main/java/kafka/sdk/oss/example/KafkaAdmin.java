@@ -43,8 +43,13 @@ public class KafkaAdmin {
         short rf = 3;
         NewTopic topic = new NewTopic(topicName, pc, rf);
 
+        //topic.configs().put("","");
+
         try {
-            admin.createTopics(Collections.singleton(topic));
+            CreateTopicsOptions topicOptions = new CreateTopicsOptions();
+            topicOptions.timeoutMs(Integer.valueOf(20000));
+
+            admin.createTopics(Collections.singleton(topic), topicOptions);
             System.out.println("Created the topic: " + topicName);
 
             for (TopicListing topicListing : admin.listTopics().listings().get()) {
