@@ -59,7 +59,7 @@ class Starter implements Callable<Integer> {
         }
 
         if (pOrC.equals("p")) {
-            if (isBulk = false)
+            if (isBulk == false)
                 Producer.produce(topicName);
             else
                 Producer.sendBulk(topicName);

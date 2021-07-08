@@ -54,7 +54,6 @@ public class Producer {
         streamOrKafkaTopicName = topic;
         producerInitialize();
 
-
         try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
             String input = "";
             while (true) {
