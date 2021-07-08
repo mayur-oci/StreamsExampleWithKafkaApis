@@ -24,5 +24,5 @@ mvn exec:java -Dexec.arguments="c,-t=<topic_name>,-cg=<name_of_consumer_group>"
 
 ## Create Topic
 ```
-mvn compile exec:java -Dexec.arguments="admin,-t=<topic_name>,-pc=<number_of_partitions_for_the_topic>"
+mvn exec:java -Dexec.arguments="admin,-t=<topic_name>,-pc=<number_of_partitions_for_the_topic>"
 ```
