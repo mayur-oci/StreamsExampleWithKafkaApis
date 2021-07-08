@@ -13,7 +13,7 @@ mvn exec:java -Dexec.arguments="p,-t=<topic_name>"
 ## Producer Bulk
 
 ```
-mvn exec:java -Dexec.arguments="p,-t=OssFn,-isBulk=true"
+mvn exec:java -Dexec.arguments="p,-t=<topic_name>,-isBulk=true"
 ```
 
 ## Consumer 
