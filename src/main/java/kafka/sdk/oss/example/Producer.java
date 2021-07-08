@@ -6,9 +6,8 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Properties;
+import java.util.*;
 
 public class Producer {
 
@@ -19,17 +18,20 @@ public class Producer {
     static String authToken = "2m{s4WTCXysp:o]tGx4K";
     static String streamOrKafkaTopicName = "OssFn";
     static KafkaProducer producer = null;
-    static {
+    static Properties properties = new Properties();
+
+
+    private static void producerInitialize() {
         try {
             Properties properties = getKafkaProperties();
             producer = new KafkaProducer<>(properties);
+            System.out.println("\n\n\nStarted Producer for OSS");
         } catch (Exception e) {
             System.err.println("Error: exception " + e);
         }
     }
 
     private static Properties getKafkaProperties() {
-        Properties properties = new Properties();
         properties.put("bootstrap.servers", bootstrapServers);
         properties.put("security.protocol", "SASL_SSL");
         properties.put("sasl.mechanism", "PLAIN");
@@ -48,8 +50,10 @@ public class Producer {
         return properties;
     }
 
-    public static void produce() {
-        System.out.println("\n\n\nStarted Producer for OSS");
+    public static void produce(String topic) {
+        streamOrKafkaTopicName = topic;
+        producerInitialize();
+
 
         try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
             String input = "";
@@ -62,6 +66,8 @@ public class Producer {
                     break;
 
                 sendMessage(input.split("-")[0], input.split("-")[1]);
+                // producer.send() is async, to make sure all messages are sent we use producer.flush()
+                producer.flush();
             }
             System.out.println("Closing Kafka Producer and exiting");
             producer.close();
@@ -79,11 +85,50 @@ public class Producer {
                         + ", exception is " + ex);
                 ex.printStackTrace();
             } else {
-                System.err.println("Sent msg to " + md.partition() + " with offset " + md.offset() + " at " + md.timestamp());
+                //System.err.println("TRACE: Sent msg to partition-" + md.partition() + " with offset " + md.offset() + " at " + md.timestamp());
             }
         });
+    }
 
-        // producer.send() is async, to make sure all messages are sent we use producer.flush()
-        producer.flush();
+    public static void sendBulk(String topic) {
+        streamOrKafkaTopicName = topic;
+
+        producerInitialize();
+        String[] statesArray = {"Order Received from customer", "Order Accepted By Restaurant", "Order Accepted By Delivery Boy", "Food Prepared and ready for pickup", "Food on delivery", "Food delievered"};
+        List<String> orderStates = Arrays.asList(statesArray);
+
+        Integer MAX_ORDERID = 1000;
+
+        Integer[] orderIdArray = new Integer[MAX_ORDERID / 10];
+        for (Integer i = 10, j = 0; i <= MAX_ORDERID; i = i + 10, j++) {
+            orderIdArray[j] = i;
+        }
+
+
+        for (String orderState : orderStates) {
+            Set<Integer> orderDoneSet = new HashSet<Integer>();
+
+            while (orderDoneSet.size() < (MAX_ORDERID / 10)) {
+                Integer orderIdRandomlyPicked = null;
+                do {
+                    orderIdRandomlyPicked = getRandom(orderIdArray);
+                } while (orderDoneSet.contains(orderIdRandomlyPicked));
+
+                orderDoneSet.add(orderIdRandomlyPicked);
+
+                System.out.println("sending message to topic-" + topic +
+                        " for orderId-" + orderIdRandomlyPicked + " for state-" + orderState);
+                sendMessage("OrderId-" + orderIdRandomlyPicked.toString(), orderState);
+            }
+            producer.flush();
+            System.out.println("State Produced " + orderState + " for all orders!");
+        }
+
+        producer.close();
+    }
+
+    static Integer getRandom(Integer[] array) {
+        int rnd = new Random().nextInt(array.length);
+        return array[rnd];
     }
 }

@@ -1,13 +1,11 @@
 package kafka.sdk.oss.example;
 
-import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.consumer.*;
+import org.apache.kafka.common.TopicPartition;
 
 import java.time.Duration;
-import java.util.Collections;
-import java.util.Properties;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class Consumer {
     static String bootstrapServers = "cell-1.streaming.us-sanjose-1.oci.oraclecloud.com:9092";
@@ -40,21 +38,52 @@ public class Consumer {
         return props;
     }
 
-    public static void consume(String cgName) {
+    public static void consume(String topic, String cgName) {
+        streamOrKafkaTopicName = topic;
         final KafkaConsumer<Integer, String> consumer = new KafkaConsumer<>(getKafkaProperties(cgName));
 
-        consumer.subscribe(Collections.singletonList(streamOrKafkaTopicName));
+        consumer.subscribe(Collections.singletonList(streamOrKafkaTopicName), new ConsumerRebalanceListener() {
+            @Override
+            public void onPartitionsRevoked(Collection<TopicPartition> partitions) {
+                System.out.printf("onPartitionsRevoked - consumerGroupName: %s, partitions: %s%n", cgName,
+                        formatPartitions(partitions));
+            }
+
+            @Override
+            public void onPartitionsAssigned(Collection<TopicPartition> partitions) {
+                System.out.printf("onPartitionsAssigned - consumerName: %s, partitions: %s%n", cgName,
+                        formatPartitions(partitions));
+            }
+        });
 
         System.out.println("\n\n\nStarted Consumer for OSS with consumer group name: " + cgName);
 
-        ConsumerRecords<Integer, String> records = consumer.poll(Duration.ofMillis(30000l));
+        while (true) {
+//            System.out.println("Partitions assigned are :");
+//            Set<TopicPartition> partitions = consumer.assignment();
+//            partitions.forEach(part -> System.out.println(part.partition()));
 
-        System.out.println("size of records polled is " + records.count());
-        for (ConsumerRecord<Integer, String> record : records) {
-            System.out.println("Received message: (key/OrderId-" + record.key() + ", Value- " + record.value() + ") at offset " + record.offset() + " from partition " + record.partition());
+            System.out.println("\n\nPolling records: ");
+            ConsumerRecords<Integer, String> records = consumer.poll(Duration.ofMillis(30000l));
+
+            System.out.println("size of records polled is " + records.count());
+            for (ConsumerRecord<Integer, String> record : records) {
+                 System.out.println("Received message: (key-" + record.key() + ", Value- " + record.value() + ") at offset " + record.offset() + " from partition " + record.partition());
+            }
+
+            consumer.commitSync();
+            try {
+                Thread.sleep(5 * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
+        //consumer.close();
+    }
 
-        consumer.commitSync();
-        consumer.close();
+    private static List<String> formatPartitions(Collection<TopicPartition> partitions) {
+        return partitions.stream().map(topicPartition ->
+                String.format("topic: %s, partition: %s", topicPartition.topic(), topicPartition.partition()))
+                .collect(Collectors.toList());
     }
 }
