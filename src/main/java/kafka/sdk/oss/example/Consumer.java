@@ -15,7 +15,7 @@ public class Consumer {
     static String tenancyName = "intrandallbarnes";
     static String username = "mayur.raleraskar@oracle.com";
     static String streamPoolId = "ocid1.streampool.oc1.us-sanjose-1.amaaaaaauwpiejqawbcccfmvdkctu5vbmhwlogzsjss4haz7nuepc4ihk3ea";
-    static String authToken = "2m{s4WTCXysp:o]tGx4K";
+    static String authToken = "";
     static String streamOrKafkaTopicName = "OssFn";
 
     private static Properties getKafkaProperties(String consumerGroupName) {
